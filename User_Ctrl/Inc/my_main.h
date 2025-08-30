@@ -11,7 +11,7 @@
 #include "my_usart.h"
 
 //(要调试可用，现在用不到)
-#define DEBUG_UART_HANDLER     huart10
+#define DEBUG_UART_HANDLER     huart8
 #define DEBUG_BUFFER_SIZE          4096
 #define DIV10(x)    (((int64_t)x*0x66666667L)>>34)
 extern uint8_t debug_buffer[DEBUG_BUFFER_SIZE];

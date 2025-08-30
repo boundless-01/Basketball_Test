@@ -51,8 +51,8 @@ void main_loop(void)
 		float setoutposTime = 2.0f;                   //运动到捡球位置控制周期 2.0f
     float speedDownTime = 0.5f;		                //减速控制周期 0.5f
 		
-		uint32_t p_pos = 32.5 * 60.f * 1000.f;         //位置环KP 1.5 * 60.f * 1000.f
-		uint32_t d_pos = 0.95 * 0.1f * 1000.f;         //位置环KD 0.2 * 0.1f * 1000.f
+		uint32_t p_pos = 3.5 * 60.f * 1000.f;         //位置环KP 1.5 * 60.f * 1000.f
+		uint32_t d_pos = 0.6 * 0.1f * 1000.f;         //位置环KD 0.2 * 0.1f * 1000.f
 
     uint32_t p_speed =  3.5 * 1000.f;             //速度环KP 1.5*1000.f
 		uint32_t i_speed =  3.0 * 1000.f;             //速度环KI 3.0*1000.f
@@ -61,20 +61,20 @@ void main_loop(void)
 		
 		ReadPVT(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID);
 		
-		if (tim_cnt == 1500)
+		if (tim_cnt == 500)
 		{
 			BEEP_ON;
 			ResetControlMode(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, POS_MODE);
 			SetVelLimit(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, 15 * 4096);
 		}
-		else if (tim_cnt == 1600)
+		else if (tim_cnt == 600)
 		{
 			BEEP_OFF;
 		}
-		else if (tim_cnt >= 1600)
+		else if (tim_cnt >= 600)
 		{
-			//DEBUG("%d, %f, %f, %f, %f, %f\r\n", mode, upperArmMsg.pos / 6.f / PI * 180.f, upperArmMsg.pos, expVel / 4096.f, upperArmMsg.vel / 2.f / PI, upperArmMsg.torque);
-			DEBUG("%d, %f, %d, %f, %f ,%f ,%d\r\n",mode, upperArmMsg.pos / 6.f / PI * 180.f, setballtim_cnt, upperArmMsg.pos / 6.f, setPos , upperArmMsg.torque, HB.upper_arm);
+//		DEBUG("%d, %f, %f, %f, %f, %f\r\n", mode, upperArmMsg.pos / 6.f / PI * 180.f, upperArmMsg.pos, expVel / 4096.f, upperArmMsg.vel / 2.f / PI, upperArmMsg.torque);
+			DEBUG("%d, %f, %f, %d, %f ,%f ,%d\r\n", mode, expPos / 4096.f / 6.f * 2 * PI, upperArmMsg.pos / 6.f / PI * 180.f, setballtim_cnt,  upperArmMsg.ex_curr, upperArmMsg.torque, HB.upper_arm);
 			if(setballOK == 0)
 			{
 				if(upperArmMsg.pos / 6.f <= setPos)
@@ -129,7 +129,7 @@ void main_loop(void)
 					SetPosKP(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, p_pos);
 					SetPosKD(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, d_pos);
 					
-					expPos = 13.f / 360.f * 4096.f * 6.f;
+					expPos = 13.f / 360.f * 4096.f * 6.f * sin(PI * setoutpos_cnt / 400 / 2);
 					
 					PosCtrl(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, (int)expPos);
 				}
