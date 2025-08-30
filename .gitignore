@@ -39,3 +39,25 @@
 
 # debug information files
 *.dwo
+
+# Ignore Keil uVision project files
+[Mm]dk-[Aa][Rr][Mm]/
+*.uvguix.*
+*.uvoptx
+*.uvprojx
+*.dep
+
+# Ignore build outputs
+*.axf
+*.hex
+*.bin
+*.map
+*.lst
+*.htm
+*.build_log.htm
+
+# Ignore intermediate object files
+*.o
+*.d
+*.crf
+*.lnp
