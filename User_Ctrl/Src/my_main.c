@@ -28,22 +28,31 @@ void main_loop(void)
 {
 	if (timer_5ms_Flag) // 5ms定时器
 	{
+		//CheckCanCom();
+		HB.upper_arm = HB.upper_arm < 200 ? HB.upper_arm + 1 : 200;
+		
 		timer_5ms_Flag = 0;
 		
 		static int tim_cnt = 0;
+		static int setballtim_cnt = 0;                //捡球阶段计时器
 		static int speed_up_cnt = 0;
+		static int setoutpos_cnt = 0;
 		static int speed_down_cnt = 0;
 		static int mode = 0;
+		static int setballOK = 0;                     //捡球成功标志位
 		
 		static float expPos = 0;
 		static float expVel = 0;
 		
-		float tarPos = 120.f / 180.f * PI;            //目标位置  120.f / 360.f * 4096.f * 6.f
-		float tarVel = 20.f * 4096;                   //目标速度
-		float speedUpTime = 0.5f;                     //加速控制周期 0.2f 
-    float speedDownTime = 0.5f;		                //减速控制周期 0.5f 
-		uint32_t p_pos = 1.5 * 60.f * 1000.f;         //位置环KP 1.5 * 60.f * 1000.f
-		uint32_t d_pos = 0.2 * 0.1f * 1000.f;         //位置环KD 0.2 * 0.1f * 1000.f
+		float tarPos = -120.f / 180.f * PI;           //目标位置  -120.f / 360.f * 4096.f * 6.f
+		float setPos = 13.f / 180.f * PI;             //捡球位置  13.f / 360.f * 4096.f *6.f
+		float tarVel = 20.f * 4096;                   //目标速度  20.f * 4096
+		float speedUpTime = 0.2f;                     //加速控制周期 0.2f
+		float setoutposTime = 2.0f;                   //运动到捡球位置控制周期 2.0f
+    float speedDownTime = 0.5f;		                //减速控制周期 0.5f
+		
+		uint32_t p_pos = 32.5 * 60.f * 1000.f;         //位置环KP 1.5 * 60.f * 1000.f
+		uint32_t d_pos = 0.95 * 0.1f * 1000.f;         //位置环KD 0.2 * 0.1f * 1000.f
 
     uint32_t p_speed =  3.5 * 1000.f;             //速度环KP 1.5*1000.f
 		uint32_t i_speed =  3.0 * 1000.f;             //速度环KI 3.0*1000.f
@@ -55,29 +64,83 @@ void main_loop(void)
 		if (tim_cnt == 1500)
 		{
 			BEEP_ON;
-			ResetControlMode(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, VEL_MODE);
-			SetVelLimit(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, 30 * 4096);
+			ResetControlMode(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, POS_MODE);
+			SetVelLimit(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, 15 * 4096);
 		}
 		else if (tim_cnt == 1600)
 		{
 			BEEP_OFF;
 		}
 		else if (tim_cnt >= 1600)
-		{	
-			DEBUG("%d, %f, %f, %f, %f, %f\r\n", mode, upperArmMsg.pos / 6.f / PI * 180.f, upperArmMsg.pos, expVel / 4096.f, upperArmMsg.vel / 2.f / PI, upperArmMsg.torque);
-			
-			if (upperArmMsg.pos / 6.f <= tarPos)
+		{
+			//DEBUG("%d, %f, %f, %f, %f, %f\r\n", mode, upperArmMsg.pos / 6.f / PI * 180.f, upperArmMsg.pos, expVel / 4096.f, upperArmMsg.vel / 2.f / PI, upperArmMsg.torque);
+			DEBUG("%d, %f, %d, %f, %f ,%f ,%d\r\n",mode, upperArmMsg.pos / 6.f / PI * 180.f, setballtim_cnt, upperArmMsg.pos / 6.f, setPos , upperArmMsg.torque, HB.upper_arm);
+			if(setballOK == 0)
 			{
-				mode = 1;
-				
-				speed_up_cnt++;
-				
+				if(upperArmMsg.pos / 6.f <= setPos)
+				{
+					mode = 1;
+					
+					setoutpos_cnt++;
+				}
+				if(upperArmMsg.pos / 6.f - setPos >= -0.015f && upperArmMsg.pos / 6.f - setPos <= 0.015f)
+				{
+					setballtim_cnt++;
+				}
+				if(setballtim_cnt == 1000)
+				{
+					
+					BEEP_ON;
+					/*
+					
+						操控夹球
+					
+					*/
+				}
+				else if(setballtim_cnt == 1200)
+				{
+					BEEP_OFF;
+					ResetControlMode(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, VEL_MODE);
+					SetVelLimit(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, 30 * 4096);
+//					setballOK = 1;
+				}
+			}
+			if(setballOK == 1)
+			{
+				if(upperArmMsg.pos / 6.f >= tarPos)
+				{
+					mode = 2;
+					
+					speed_up_cnt++;
+				}
+				else
+				{
+					mode = 3;
+					
+					speed_down_cnt++;
+				}
+			}
+		
+/*******************************机械臂操作************************************/
+			if(mode == 1)      //捡球阶段
+			{
+				if(setoutpos_cnt <= setoutposTime / 0.005)
+				{
+					SetPosKP(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, p_pos);
+					SetPosKD(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, d_pos);
+					
+					expPos = 13.f / 360.f * 4096.f * 6.f;
+					
+					PosCtrl(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, (int)expPos);
+				}
+			}
+			if(mode == 2)      //加速阶段
+			{
 				if (speed_up_cnt <= speedUpTime / 0.005)
 				{
-					if(speed_up_cnt <= 0.2f / 0.005)
+					if(speed_up_cnt <= 0.08f / 0.005)
 					{
-						p_speed = 2.55 * 1000.f;
-						
+						p_speed = 2.6 * 1000.f;
 					}
 					else
 					{
@@ -86,30 +149,26 @@ void main_loop(void)
 						SetSpeedKP(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, p_speed);  //速度的KP
 						SetSpeedKI(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, i_speed);  //速度的KI
 						
-						expVel = (tarVel / speedUpTime) * speed_up_cnt * 0.005 - (tarVel / PI / 2.f) * sin(PI * 2.f * speed_up_cnt * 0.005 / speedUpTime);
+						expVel = -(tarVel / speedUpTime) * speed_up_cnt * 0.005 + (tarVel / PI / 2.f) * sin(PI * 2.f * speed_up_cnt * 0.005 / speedUpTime);
 						
 						VelCtrl(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, (int)expVel);
 				}
 				else
 				{
-					expVel = tarVel;
+					expVel = -tarVel;
 					
 					VelCtrl(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, (int)expVel);
 				}
 			}
-			else
+			if(mode == 3)      //减速阶段
 			{
-				mode = 2;
-				
-				speed_down_cnt++;
-				
 				if (speed_down_cnt <= speedDownTime / 0.005)
 				{
 					p_speed = 2.8 * 1000.f;
 					SetSpeedKP(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, p_speed);  //速度的KP
 					SetSpeedKI(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, i_speed);  //速度的KI
 					
-					expVel = tarVel - (tarVel / speedDownTime) * speed_down_cnt * 0.005 - (tarVel / PI / 2.f) * sin(PI * 2.f * speed_down_cnt * 0.005 / speedDownTime);
+					expVel = -tarVel + (tarVel / speedDownTime) * speed_down_cnt * 0.005 + (tarVel / PI / 2.f) * sin(PI * 2.f * speed_down_cnt * 0.005 / speedDownTime);
 					
 					VelCtrl(&UP_FDCAN, PTP_MODE, UPPER_ARM_ID, (int)expVel);
 				}

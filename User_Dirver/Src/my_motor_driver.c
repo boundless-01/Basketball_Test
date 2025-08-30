@@ -259,18 +259,9 @@ void VelCtrl(FDCAN_HandleTypeDef* hfdcan, CommandMode CMDmode, uint8_t DriverNum
 	data[0] = (identifier>>0)&0xFF;
 
 	/*发送符号位*/
-	if(vel >= 0)
-	{
-		data[1] = (vel>>0)&0xFF;
-		data[2] = (vel>>8)&0xFF;
-		data[3] = (vel>>16)&0xFF; 
-	}
-	else if(vel < 0)
-	{
-		data[1] = (-vel>>0)&0xFF;
-		data[2] = (-vel>>8)&0xFF;
-		data[3] = ((-vel>>16)&0xFF) | 0x80;
-	}
+	data[1] = (vel>>0)&0xFF;
+	data[2] = (vel>>8)&0xFF;
+	data[3] = (vel>>16)&0xFF; 
 	
 	if(HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &TxMessage, data) != HAL_OK)
 	{
@@ -306,28 +297,19 @@ void PosCtrl(FDCAN_HandleTypeDef* hfdcan, CommandMode CMDmode, uint8_t DriverNum
 	TxMessage.BitRateSwitch =	FDCAN_BRS_OFF;
 	TxMessage.FDFormat = 	FDCAN_CLASSIC_CAN;
 	TxMessage.TxEventFifoControl = 	FDCAN_NO_TX_EVENTS;
-	TxMessage.MessageMarker = 0x01;	
+	TxMessage.MessageMarker = 0x01;
 
 	data[0] = (identifier>>0)&0xFF;
 
 	/*发送符号位*/
-	if(pos >= 0)
-	{
-		data[1] = (pos>>0)&0xFF;
-		data[2] = (pos>>8)&0xFF;
-		data[3] = (pos>>16)&0xFF; 
-	}
-	else if(pos < 0)
-	{
-		data[1] = (-pos>>0)&0xFF;
-		data[2] = (-pos>>8)&0xFF;
-		data[3] = ((-pos>>16)&0xFF) | 0x80;
-	}
+	data[1] = (pos>>0)&0xFF;
+	data[2] = (pos>>8)&0xFF;
+	data[3] = (pos>>16)&0xFF;
 	
 	if(HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &TxMessage, data) != HAL_OK)
 	{
 		//Error_Handler();
-	}	
+	}
 }
 
 int float_to_uint(float x, float x_min, float x_max, int bits)// 浮点转无符号整数
