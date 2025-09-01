@@ -157,6 +157,17 @@ int main(void)
 
 	uint8_t resetOK = 0;
 	// 给驱动器发复位指令喵
+	
+	//初始化电机反馈
+	for(int i = 0; i < 4; i++)
+	{
+		R80_InitFeedback(&motors[i], i+1);
+	}
+	//使能ID1电机
+	R80_SingleMotor_Enable(1);
+	HAL_Delay(100);
+	
+	
 	while(!resetOK)
 	{
 		if (timer_5ms_Flag)
@@ -197,7 +208,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		//Liuyuzhenshuai
+		
 			main_loop();
 	  
     /* USER CODE END WHILE */

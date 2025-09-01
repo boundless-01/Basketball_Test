@@ -58,47 +58,57 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 //FDCAN 接收 FIFO0 的中断回调函数，当 RXFIFO0 收到新报文时由 HAL 库自动调用
 {
 	gRobot.rx_can_cnt++;
-	uint8_t canNodeId = 0;
-	uint8_t data8[9] = {0};
+//	uint8_t canNodeId = 0;
+//	uint8_t data8[9] = {0};
 
 	if(hfdcan == &hfdcan1)
 	{
-		HAL_FDCAN_GetRxMessage(&hfdcan1, FDCAN_RX_FIFO0, &RxMessage0, data8);
-		canNodeId = (RxMessage0.Identifier - 0x280);
-		switch(canNodeId)
+		FDCAN_RxHeaderTypeDef rx_header;
+		uint8_t rx_data[8];
+		
+		HAL_FDCAN_GetRxMessage(&hfdcan1, FDCAN_RX_FIFO0, &rx_header, rx_data);
+		
+		uint8_t motor_id = rx_header.Identifier - 0x50;
+		if(motor_id < 4)
 		{
-			case UPPER_ARM_ID:
-			{
-				UpackCalfMsg(&upperArmMsg, data8);
-				GetDriverMsg(&upperArmMsg, data8);
-				
-				HB.upper_arm = 0;
-				firstComFlag.upper_arm = 1;
-				break;
-			}
-			
-			case FOREARM_ID:
-			{
-				UpackCalfMsg(&forearmMsg, data8);
-				GetDriverMsg(&forearmMsg ,data8);
-
-				HB.forearm = 0;
-				firstComFlag.forearm = 1;
-				break;
-			}
-			
-			case WRIST_ID:
-			{
-				UpackCalfMsg(&wristMsg, data8);
-				GetDriverMsg(&wristMsg ,data8);
-				
-				HB.wrist = 0;
-				firstComFlag.wrist = 1;
-				break;
-			}
+			R80_ParseFeedback(rx_header.Identifier, rx_data, &motors[motor_id]);
 		}
+//		HAL_FDCAN_GetRxMessage(&hfdcan1, FDCAN_RX_FIFO0, &RxMessage0, data8);
+//		canNodeId = (RxMessage0.Identifier - 0x280);
+//		switch(canNodeId)
+//		{
+//			case UPPER_ARM_ID:
+//			{
+//				UpackCalfMsg(&upperArmMsg, data8);
+//				GetDriverMsg(&upperArmMsg, data8);
+//				
+//				HB.upper_arm = 0;
+//				firstComFlag.upper_arm = 1;
+//				break;
+//			}
+//			
+//			case FOREARM_ID:
+//			{
+//				UpackCalfMsg(&forearmMsg, data8);
+//				GetDriverMsg(&forearmMsg ,data8);
+
+//				HB.forearm = 0;
+//				firstComFlag.forearm = 1;
+//				break;
+//			}
+//			
+//			case WRIST_ID:
+//			{
+//				UpackCalfMsg(&wristMsg, data8);
+//				GetDriverMsg(&wristMsg ,data8);
+//				
+//				HB.wrist = 0;
+//				firstComFlag.wrist = 1;
+//				break;
+//			}
+//		}
 	}
-	memset(&RxMessage0,0,sizeof(RxMessage0));
+//	memset(&RxMessage0,0,sizeof(RxMessage0));
 }
 
 //fdcan3
@@ -155,6 +165,7 @@ FDCAN_HandleTypeDef R80_FDCAN;
 FDCAN_TxHeaderTypeDef r80_tx_message;
 uint8_t r80_fdcan_send_data[8];
 #define ENCODER_COUNTS_PER_REV 8192    // 编码器每圈计数
+r80_feedback_t motors[4];
 
 //电机使能控制
 void R80_Enable(uint8_t motor1_enable, uint8_t motor2_enable, uint8_t motor3_enable, uint8_t motor4_enable)
@@ -420,9 +431,9 @@ void R80_ParseFeedback(uint32_t std_id, const uint8_t data[8], r80_feedback_t* f
     feedback->motor_id = (std_id >= 0x50 && std_id <= 0x5F) ? (std_id - 0x50) : 0xFF;
     
     // 解析原始数据
-    int16_t raw_vel = (int16_t)((data[0] << 8) | data[1]);
-    int16_t raw_cur = (int16_t)((data[2] << 8) | data[3]);
-    feedback->raw_position = (int16_t)((data[4] << 8) | data[5]);
+    int16_t raw_vel = (int16_t)(((data[0] << 8) & 0xFF00) | (data[1] & 0x00FF));
+    int16_t raw_cur = (int16_t)(((data[2] << 8) & 0xFF00) | (data[3] & 0x00FF));
+    feedback->raw_position = (int16_t)(((data[4] << 8) & 0xFF00) | (data[5] & 0x00FF));
     
     feedback->velocity_rps = raw_vel / 100.0f;
     feedback->current_a = raw_cur / 100.0f;

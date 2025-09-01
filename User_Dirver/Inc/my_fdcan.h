@@ -90,7 +90,7 @@ typedef struct {
     uint32_t timestamp;         // Ê±¼ä´Á
 } r80_feedback_t;
 
-
+extern r80_feedback_t motors[4];
 /* USER CODE END Private defines */
 
 
