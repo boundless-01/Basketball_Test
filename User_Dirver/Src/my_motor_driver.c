@@ -56,7 +56,7 @@ uint8_t ResetZero(FDCAN_HandleTypeDef *hfdcan, CommandMode CMDmode, uint8_t Driv
 {
 //		DEBUG("RESET%d!!!\r\n", DriverNum);
     uint16_t identifier = IDENTIFIER_RESET_ZERO;
-    FDCAN_TxHeaderTypeDef TxMessage = {0};
+    FDCAN_TxHeaderTypeDef TxMessage = {0};;
     uint8_t data[2];
 
     TxMessage.Identifier = DRIVER_SERVER_BASE_ID + CMDmode + DriverNum;

@@ -10,8 +10,8 @@
 #endif
 
 //上下层对应的can号
-#define UP_FDCAN	(hfdcan1)
-#define WHEEL_FDCAN (hfdcan3)
+#define UP_FDCAN	(hfdcan3)
+#define WHEEL_FDCAN (hfdcan1)
 
 /*各电机ID宏定义*/
 //舵轮电机

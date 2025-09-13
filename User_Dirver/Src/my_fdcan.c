@@ -65,6 +65,54 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 	{
 		HAL_FDCAN_GetRxMessage(&hfdcan1, FDCAN_RX_FIFO0, &RxMessage0, data8);
 		canNodeId = (RxMessage0.Identifier - 0x280);
+		
+		switch(canNodeId)
+		{
+			case WHEEL1_ID:
+			{
+				//接收can消息，数据转换，存储
+				GetSteeringWheelMsg(&wheel1Msg,data8);
+				HB.wheel1 = 0;
+				firstComFlag.wheel1 = 1;
+				break;
+			}
+			case WHEEL2_ID:
+			{
+				//接收can消息，数据转换，存储
+				GetSteeringWheelMsg(&wheel2Msg,data8);
+				HB.wheel2 = 0;
+				firstComFlag.wheel2 = 1;
+				break;
+			}
+			case WHEEL3_ID:
+			{
+				//接收can消息，数据转换，存储
+				GetSteeringWheelMsg(&wheel3Msg,data8);
+				HB.wheel3 = 0;
+				firstComFlag.wheel3 = 1;
+				break;
+			}
+		}
+	}
+	memset(&RxMessage0,0,sizeof(RxMessage0));
+}
+
+//fdcan3
+void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
+{
+	gRobot.rx_can_cnt++;
+	uint8_t canNodeId = 0;
+	uint8_t data8[9] = {0};
+	if(hfdcan == &hfdcan3)
+	{
+		HAL_FDCAN_GetRxMessage(&hfdcan3, FDCAN_RX_FIFO1, &RxMessage1, data8);
+		static uint32_t FifoFillLevel1 = 0;
+		static uint32_t FifoFillLevel3 = 0;
+		FifoFillLevel1 = HAL_FDCAN_GetRxFifoFillLevel(&hfdcan1,FDCAN_RX_FIFO0);
+		FifoFillLevel3 = HAL_FDCAN_GetRxFifoFillLevel(&hfdcan3,FDCAN_RX_FIFO1);
+//		DEBUG("F: %d %d\r\n",(int)FifoFillLevel1,(int)FifoFillLevel3);
+		canNodeId = (RxMessage1.Identifier - 0x280);
+		
 		switch(canNodeId)
 		{
 			case UPPER_ARM_ID:
@@ -94,52 +142,6 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 				
 				HB.wrist = 0;
 				firstComFlag.wrist = 1;
-				break;
-			}
-		}
-	}
-	memset(&RxMessage0,0,sizeof(RxMessage0));
-}
-
-//fdcan3
-void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
-{
-	gRobot.rx_can_cnt++;
-	uint8_t canNodeId = 0;
-	uint8_t data8[9] = {0};
-	if(hfdcan == &hfdcan3)
-	{
-		HAL_FDCAN_GetRxMessage(&hfdcan3, FDCAN_RX_FIFO1, &RxMessage1, data8);
-		static uint32_t FifoFillLevel1 = 0;
-		static uint32_t FifoFillLevel3 = 0;
-		FifoFillLevel1 = HAL_FDCAN_GetRxFifoFillLevel(&hfdcan1,FDCAN_RX_FIFO0);
-		FifoFillLevel3 = HAL_FDCAN_GetRxFifoFillLevel(&hfdcan3,FDCAN_RX_FIFO1);
-//		DEBUG("F: %d %d\r\n",(int)FifoFillLevel1,(int)FifoFillLevel3);
-		canNodeId = (RxMessage1.Identifier - 0x280);
-		switch(canNodeId)
-		{
-			case WHEEL1_ID:
-			{
-				//接收can消息，数据转换，存储
-				GetSteeringWheelMsg(&wheel1Msg,data8);
-				HB.wheel1 = 0;
-				firstComFlag.wheel1 = 1;
-				break;
-			}
-			case WHEEL2_ID:
-			{
-				//接收can消息，数据转换，存储
-				GetSteeringWheelMsg(&wheel2Msg,data8);
-				HB.wheel2 = 0;
-				firstComFlag.wheel2 = 1;
-				break;
-			}
-			case WHEEL3_ID:
-			{
-				//接收can消息，数据转换，存储
-				GetSteeringWheelMsg(&wheel3Msg,data8);
-				HB.wheel3 = 0;
-				firstComFlag.wheel3 = 1;
 				break;
 			}
 		}

@@ -59,8 +59,8 @@
 extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 extern ADC_HandleTypeDef hadc1;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_stream0;
-extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan3;
+extern FDCAN_HandleTypeDef hfdcan1;
 extern DMA_HandleTypeDef hdma_i2c1_rx;
 extern DMA_HandleTypeDef hdma_i2c1_tx;
 extern I2C_HandleTypeDef hi2c1;

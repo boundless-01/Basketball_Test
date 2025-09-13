@@ -195,10 +195,22 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	int flag = 0;
   while (1)
   {
-		//Liuyuzhenshuai
-			main_loop();
+			if(flag == 0)
+			{
+				HAL_GPIO_WritePin(VALVE1_GPIO_Port, VALVE1_Pin, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(VALVE2_GPIO_Port, VALVE2_Pin, GPIO_PIN_SET);
+				//打开夹爪
+				flag = 1;
+			}
+			if(flag == 1)
+			{
+				main_loop();
+			}
+//		HAL_GPIO_WritePin(VALVE1_GPIO_Port, VALVE1_Pin, GPIO_PIN_SET);
+//		HAL_GPIO_WritePin(VALVE2_GPIO_Port, VALVE2_Pin, GPIO_PIN_RESET);
 	  
     /* USER CODE END WHILE */
 
